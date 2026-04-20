@@ -498,38 +498,41 @@ end
 
 -- Misc Config
 local selectedPlayer = nil
-local playerList = {}
+local playerDropdownLabel = nil
+local playerOptFrame = nil
 
-local function RefreshPlayerList(dropdownLabel, dropdownButton, OptFrame)
-    playerList = {}
+local function RefreshPlayerList()
+    local players = {}
     for _, plr in pairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer then
-            table.insert(playerList, plr.Name)
+            table.insert(players, plr.Name)
         end
     end
-    if #playerList == 0 then
-        playerList = {"No players"}
+    if #players == 0 then
+        players = {"No players"}
     end
     
-    OptFrame:ClearAllChildren()
-    for _, name in pairs(playerList) do
-        local OptBtn = Instance.new("TextButton")
-        OptBtn.Size = UDim2.new(1, 0, 0, 22)
-        OptBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-        OptBtn.BorderSizePixel = 0
-        OptBtn.Text = name
-        OptBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-        OptBtn.Font = Enum.Font.Code
-        OptBtn.TextSize = 11
-        OptBtn.Parent = OptFrame
-        OptBtn.ZIndex = 10
-        OptBtn.MouseButton1Click:Connect(function()
-            selectedPlayer = name
-            dropdownLabel.Text = "Player: " .. name
-            OptFrame.Visible = false
-        end)
+    if playerOptFrame and playerDropdownLabel then
+        playerOptFrame:ClearAllChildren()
+        for _, name in pairs(players) do
+            local OptBtn = Instance.new("TextButton")
+            OptBtn.Size = UDim2.new(1, 0, 0, 22)
+            OptBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            OptBtn.BorderSizePixel = 0
+            OptBtn.Text = name
+            OptBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            OptBtn.Font = Enum.Font.Code
+            OptBtn.TextSize = 11
+            OptBtn.Parent = playerOptFrame
+            OptBtn.ZIndex = 10
+            OptBtn.MouseButton1Click:Connect(function()
+                selectedPlayer = name
+                playerDropdownLabel.Text = "Player: " .. name
+                playerOptFrame.Visible = false
+            end)
+        end
+        playerOptFrame.Size = UDim2.new(1, -10, 0, #players * 22)
     end
-    OptFrame.Size = UDim2.new(1, -10, 0, #playerList * 22)
 end
 
 local function BuildMisc()
@@ -541,7 +544,6 @@ local function BuildMisc()
     Frame.Size = UDim2.new(1, -20, 0, 45)
     Frame.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
     Frame.BorderSizePixel = 0
-    Frame.Parent = ContentScroll
     Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 4)
     
     local Label = Instance.new("TextLabel")
@@ -554,6 +556,7 @@ local function BuildMisc()
     Label.TextSize = 11
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Parent = Frame
+    playerDropdownLabel = Label
     
     local Button = Instance.new("TextButton")
     Button.Size = UDim2.new(1, -10, 0, 20)
@@ -577,9 +580,10 @@ local function BuildMisc()
     OptFrame.ZIndex = 10
     Instance.new("UICorner", OptFrame).CornerRadius = UDim.new(0, 4)
     Instance.new("UIListLayout", OptFrame)
+    playerOptFrame = OptFrame
     
     Button.MouseButton1Click:Connect(function()
-        RefreshPlayerList(Label, Button, OptFrame)
+        RefreshPlayerList()
         OptFrame.Visible = not OptFrame.Visible
     end)
     
@@ -590,14 +594,17 @@ local function BuildMisc()
         if selectedPlayer and selectedPlayer ~= "No players" then
             local target = Players:FindFirstChild(selectedPlayer)
             if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
+                local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if myHRP then
+                    myHRP.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 2, 0)
+                end
             end
         end
     end))
     
     table.insert(els, CreateSection("Refresh"))
     table.insert(els, CreateButton("Refresh Player List", function()
-        RefreshPlayerList(Label, Button, OptFrame)
+        RefreshPlayerList()
     end))
     
     return els
